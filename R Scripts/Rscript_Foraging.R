@@ -19,7 +19,7 @@ library(visreg)
 #########################################################################################################
 
 
-
+#Visualizing the data
 
 
 fusca<-read.csv(file.choose("fusca.csv"), stringsAsFactors=FALSE, strip.white=TRUE, na.strings=c("NA",""))
