@@ -46,39 +46,87 @@ pitiayumi<-filter(foraging,species=="Parula pitiayumi")
 
 # visualizing the data for each species
 
-
-## boxplot with stripchart on the back
+## boxplot with stripchart on the back for foraging data
 #Migrants
 #Setophaga fusca
-boxplot(fusca$foragingrate~fusca$sociality, main='fusca',ylab='Capture rate/min',col="white",ylim=c(0,20))
+boxplot(fusca$foragingrate~fusca$sociality, main='Setophaga fusca',ylab='Capture rate/min',col="white",ylim=c(0,20))
 stripchart(fusca$foragingrate~fusca$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
 #Setophaga cerulea
-boxplot(cerulea$foragingrate~cerulea$sociality, main='cerulea',ylab='Capture rate/min',col="white",ylim=c(0,20))
+boxplot(cerulea$foragingrate~cerulea$sociality, main='Setophaga cerulea',ylab='Capture rate/min',col="white",ylim=c(0,20), width=c(1.0, 1.0))
 stripchart(cerulea$foragingrate~cerulea$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
 #Cardelina canadensis
-boxplot(canadensis$foragingrate~canadensis$sociality, main='canadensis',ylab='Capture rate/min',col="white",ylim=c(0,15))
+boxplot(canadensis$foragingrate~canadensis$sociality, main='Cardelina canadensis',ylab='Capture rate/min',col="white",ylim=c(0,15))
 stripchart(canadensis$foragingrate~canadensis$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,15))
 #Oreothlypis peregrina
-boxplot(peregrina$foragingrate~peregrina$sociality, main='peregrina',ylab='Capture rate/min',col="white",ylim=c(0,25))
+boxplot(peregrina$foragingrate~peregrina$sociality, main='Oreothlypis peregrina',ylab='Capture rate/min',col="white",ylim=c(0,25))
 stripchart(peregrina$foragingrate~peregrina$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,25))
 #Residents
 #Hemithraupis guira
-boxplot(guira$foragingrate~guira$sociality, main='guira',ylab='Capture rate/min',col="white",ylim=c(0,15))
+boxplot(guira$foragingrate~guira$sociality, main='Hemithraupis guira',ylab='Capture rate/min',col="white",ylim=c(0,15))
 stripchart(guira$foragingrate~guira$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,15))
 #Zimmerius chrysops
-boxplot(chrysops$foragingrate~chrysops$sociality, main='chrysops',ylab='Capture rate/min',col="white",ylim=c(0,10))
+boxplot(chrysops$foragingrate~chrysops$sociality, main='Zimmerius chrysops',ylab='Capture rate/min',col="white",ylim=c(0,10))
 stripchart(chrysops$foragingrate~chrysops$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,10))
 #Parula pitiayumi
-boxplot(pitiayumi$foragingrate~pitiayumi$sociality, main='pitiayumi',ylab='Capture rate/min',col="white",ylim=c(0,20))
+boxplot(pitiayumi$foragingrate~pitiayumi$sociality, main='Parula pitiayumi',ylab='Capture rate/min',col="white",ylim=c(0,20))
 stripchart(pitiayumi$foragingrate~pitiayumi$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
 
+# Combining the plots in a multiplot graph?
 
+ggplot(foraging, aes(flocksizespecies, foragingrate)) + xlab("X variable name") + ylab("Y variable name") +
+  geom_point(col = "black", size = I(2)) +
+  geom_smooth(method = lm, size = I(1), se = FALSE, col = "black") +
+  facet_wrap(~species, ncol = 0)
 
+##plot a frequency data distribution 
+###R##it seems as a poisson 
+hist(fusca$foragingrate)
+hist(cerulea$foragingrate)
+hist(canadensis$foragingrate)
+hist(peregrina$foragingrate)
+hist(chrysops$foragingrate)
+hist(guira$foragingrate)
+hist(pitiayumi$foragingrate)
+
+#checking the normality of the data ### seems like it is non-normal
+qqnorm(fusca$foragingrate)
+qqline(fusca$foragingrate, lty=2)
+qqnorm(cerulea$foragingrate)
+qqnorm(canadensis$foragingrate)
+qqnorm(peregrina$foragingrate)
+qqnorm(chrysops$foragingrate)
+qqnorm(guira$foragingrate)
+qqnorm(pitiayumi$foragingrate)
+
+shapiro.test(flocksd$Number_of_species) # iF P<0.05 daa deviate from normality, all deviate from normality
+
+shapiro.test(fusca$foragingrate)
+shapiro.test(cerulea$foragingrate)
+shapiro.test(canadensis$foragingrate)
+shapiro.test(peregrina$foragingrate)
+shapiro.test(chrysops$foragingrate)
+shapiro.test(guira$foragingrate)
+shapiro.test(pitiayumi$foragingrate)
+
+# test for overdisspersion 
+# is the variance is higher that the mean the data is overdispersed
+tapply(fusca$foragingrate, fusca$sociality, mean)
+tapply(fusca$foragingrate, fusca$sociality, var)
+
+tapply(fusca$foragingrate, fusca$sociality, mean)
+
+#because they deviate from normality, I will run GLM instead of lm
 
 # Variables as factor
 
 foraging$flocksizespecies<- as.numeric(foraging$flocksizespecies)
 foraging$Gender<- as.factor(foraging$Gender)
+### convert variables
+flocksd$Number_of_species<-as.numeric(flocksd$Number_of_species)
+flocksd$Number_of_individuals<-as.numeric(flocksd$Number_of_individuals)
+flocksd$Elevation<-as.numeric(flocksd$Elevation)
+flocksd$Type<-as.factor(flocksd$Type)
+flocksd$type<-as.factor(flocksd$type)
 #Linearfixed model
 lm<-lm(Foraging.rate ~ Flocksize+Gender+ Flocksize:Gender, data=foraging)
 plot(lm)
@@ -144,3 +192,37 @@ plot(fusca$flocksizespecies,fusca$foragingrate,
 
 plot(fusca$foragingrate,fusca$flocksizespecies)
 
+#####For movement rate
+
+## boxplot with stripchart on the back for foraging data
+#Migrants
+#Setophaga fusca
+boxplot(fusca$movementrate~fusca$sociality, main='fusca',ylab='Capture rate/min',col="white",ylim=c(0,20))
+stripchart(fusca$movementrate~fusca$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
+#Setophaga cerulea
+boxplot(cerulea$movementrate~cerulea$sociality, main='cerulea',ylab='Capture rate/min',col="white",ylim=c(0,20))
+stripchart(cerulea$movementrate~cerulea$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
+#Cardelina canadensis
+boxplot(canadensis$movementrate~canadensis$sociality, main='canadensis',ylab='Capture rate/min',col="white",ylim=c(0,15))
+stripchart(canadensis$movementrate~canadensis$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,15))
+#Oreothlypis peregrina
+boxplot(peregrina$movementrate~peregrina$sociality, main='peregrina',ylab='Capture rate/min',col="white",ylim=c(0,25))
+stripchart(peregrina$movementrate~peregrina$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,25))
+#Residents
+#Hemithraupis guira
+boxplot(guira$movementrate~guira$sociality, main='guira',ylab='Capture rate/min',col="white",ylim=c(0,15))
+stripchart(guira$movementrate~guira$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,15))
+#Zimmerius chrysops
+boxplot(chrysops$movementrate~chrysops$sociality, main='chrysops',ylab='Capture rate/min',col="white",ylim=c(0,10))
+stripchart(chrysops$movementrate~chrysops$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,10))
+#Parula pitiayumi
+boxplot(pitiayumi$movementrate~pitiayumi$sociality, main='pitiayumi',ylab='Capture rate/min',col="white",ylim=c(0,20))
+stripchart(pitiayumi$movementrate~pitiayumi$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
+
+# Foraging rate vs group size
+# Combining the plots in a multiplot graph, be aware of the linear model
+
+ggplot(foraging, aes(flocksizespecies, foragingrate)) + xlab("X variable name") + ylab("Y variable name") +
+  geom_point(col = "black", size = I(2)) +
+  geom_smooth(method = lm, size = I(1), se = FALSE, col = "black") +
+  facet_wrap(~species, ncol = 0)
