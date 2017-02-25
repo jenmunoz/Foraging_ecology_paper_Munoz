@@ -169,17 +169,17 @@ foraging$flocksizespecies<- as.numeric(foraging$flocksizespecies)
 glm1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log")) 
 glm2<-update(glm1, . ~ . - dayofseason)
 glm3<-update(glm1, . ~ . - sociality)
-glm4<-update(glm3, . ~ . - dayofseason)
+glm4<-update(glm3, . ~ . - dayofseason) # Null model same than glm9<-glm(foragingrate~1, data =fusca, family=poisson(link="log"))
 glmQ1<-update(glm1, family=quasipoisson(link="log"))
 glmQ2<-update(glm2, family=quasipoisson(link="log"))
 glmQ3<-update(glm3, family=quasipoisson(link="log"))
 glmQ4<-update(glm4, family=quasipoisson(link="log"))
 
-
+#glm5<-glm(foragingrate~1, data =fusca, family=poisson(link="log")) Null model
 summary(glmQ1)
 summary(glm3)
 summary(glm4)
-summary(glm2)
+summary(glm9)
 
 
 ##########################Checking the assumptions of the model################################################
@@ -231,9 +231,11 @@ glmQ1<-update(glm1, family=quasipoisson(link="log"))
 glmQ2<-update(glm2, family=quasipoisson(link="log"))
 glmQ3<-update(glm3, family=quasipoisson(link="log"))
 glmQ4<-update(glm4, family=quasipoisson(link="log"))
+glm5<-glm(foragingrate~1, data =fusca, family=poisson(link="log")) #Null model
+
 
 ############EXTRACT THE OVERDISPERSION PARAMETER, also given when run the model, it is different, but it is recommendend the one given in the model
-theta<-glm1$deviance/glm1$df.residual
+theta<-glmQ1$deviance/glm1$df.residual
 theta
 
 # In the analysis I incorporate the following calculation from Balker 2016, and the overdisppersion number that i gave me
@@ -264,6 +266,12 @@ summary (glm1)
 #Seasonday          3 300.17       47.52       0      1  -146.96
 #~                  2 302.35       49.70       0      1  -149.11
 
+
+# Calculating teh explained deviance
+pseudo.R2<-(glm1$null.deviance-glm1$deviance)/glm1$null.deviance
+pseudo.R2
+#pseudoR2() explained deviance)=0.3489
+
 ### visualizing the  best model fit,  how to interprete this?
 visreg(glmQ1, type = "conditional") #using the median for the ther predictors
 visreg(glmQ1,"sociality", type = "conditional", xlim=c(0,40), ylim=c(0,30), scale = "response", ylab="",  xlab=NA) 
@@ -285,14 +293,20 @@ glmQ1<-update(glm1, family=quasipoisson(link="log"))
 
 # In the summary the Estimate std are the stimate parameters in the log scale, 
 #the first one is the mean of the first group type, the others are the difference between the first group mean and the other groups,
-
-#anova(model2, test="Chi"), I guess i can use any of the two qasi or poisson since the stimates are the same
+summary(glm1)
+#anova(model2, test="Chi") using the "best model" I guess i can use any of the two qasi or poisson since the stimates are the same?
 Anova(glm1, type = 3, test="F") 
 Anova(glmQ1, type = 3, test="F") 
 
 #If I only include sociality in the model
 Anova(glm2, type = 3, test="F") 
 Anova(glmQ2, type = 3, test="F") 
+
+summary(glmQ2)
+
+
+Other way to do this no te the "a"
+anova (glm1,glm5, test="F")
 
 ## f test appropiate for quasipoisson distributions, and type3 anova order orthe term does not matter
 # test the null H that there is no differences in the foraging rate  among flocking and non-flocking individuals
