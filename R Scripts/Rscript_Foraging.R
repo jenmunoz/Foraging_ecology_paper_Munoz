@@ -231,8 +231,61 @@ glmQ1<-update(glm1, family=quasipoisson(link="log"))
 glmQ2<-update(glm2, family=quasipoisson(link="log"))
 glmQ3<-update(glm3, family=quasipoisson(link="log"))
 glmQ4<-update(glm4, family=quasipoisson(link="log"))
-glm5<-glm(foragingrate~1, data =fusca, family=poisson(link="log")) #Null model
+glm5<-glm(foragingrate~1, data =fusca, family=poisson(link="log")) #Null model equivalent to glm2 long version
 
+#Interenting models
+glm6<-glm(foragingrate~sociality+dayofseason-1, data=fusca, family=poisson(link="log"))# Give me the log estimates of each group directly
+glm7<-update(glm1, . ~ . + dayofseason:sociality) # including an interaction in the model
+summary (glm6)
+
+# Summary of the model allow me to interpret the estimates of the parameters (e.g effect sizes) in the model and the difference from cero and between them.
+# The summary give me the effect size. 
+summary(glm2)
+
+#####Visualizing the data using ggplot!!!!
+
+library(ggplot2)
+
+# For fusca
+ggplot(fusca, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
+  geom_point() + 
+  geom_smooth(method = "lm")
+
+head(fusca)
+
+ggplot(fusca, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
+  geom_point(aes(size = flocksizeind)) + 
+  geom_smooth(method = "lm")
+### For all the species
+# Smooth linear
+ggplot(foraging, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
+  geom_point(aes(size = flocksizeind)) + 
+  geom_smooth(method = "lm")+ 
+  facet_wrap(~species, scales = "free") + 
+  theme_bw()
+
+#changing alfa
+ggplot(foraging, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
+  geom_point(aes(size = flocksizeind), alpha = 0.6) + 
+   geom_smooth(method = "lm") + 
+  facet_wrap(~species, scales = "free") + 
+  theme_bw()
+
+### FREE SMOOTH
+ggplot(foraging, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
+  geom_point(aes(size = flocksizeind), alpha = 0.6) + 
+  # geom_smooth(method = "lm") + 
+  geom_smooth() + 
+  facet_wrap(~species, scales = "free") + 
+  theme_bw()
+
+# With number of species 
+ggplot(foraging, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
+  geom_point(aes(size = flocksizespecies), alpha = 0.6) + 
+  # geom_smooth(method = "lm") + 
+  geom_smooth() + 
+  facet_wrap(~species, scales = "free") + 
+  theme_bw()
 
 ############EXTRACT THE OVERDISPERSION PARAMETER, also given when run the model, it is different, but it is recommendend the one given in the model
 theta<-glmQ1$deviance/glm1$df.residual
@@ -287,16 +340,34 @@ str(fusca)
 
 #####################################################################
 #######Testing Hypothesis USING THE BEST MODEL
+# Summary of the model allow me to interpret the estimates parameters (e.g effect sizes) in the model and the difference from cero and between them.
+# The summary give me the effect sizes. For example when I do summary (glm2, the model including only sociality), I can interprete the Intercept as the log transformation of  the mean of the first level of the factr sociality, 
+# Inthis case the intercept is the log (mean capture rate for birds in flocks),  the socialitysolitary is the log Difference of the mean on birds in flocks with the mean of solitary. 
+# And the significance p-value tell me if they are different form cero (that is not really interesting0), THE SUMMARY (model) IS MOSTLY TO SEE THE EEFFECT SIZE. From this I can say or example that birds in flock forage n given times, more when they are in flocks.
+#significant difference among them. From this I can say or example that birds in flock forage n given times, more when they are in flocks.
+# Be aware that interpretation is a bit more complex for the model including sociality and day of the season
+# In the summary the Estimate are the stimate parameters in the log scale, 
+#the first one is the mean of the first group type, the others are the difference between the first group mean and the other groups,
+summary(glm2)
+
 #are the difference in foraging rate statistically significant? USING
 glm1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log")) 
 glmQ1<-update(glm1, family=quasipoisson(link="log"))
 
-# In the summary the Estimate std are the stimate parameters in the log scale, 
-#the first one is the mean of the first group type, the others are the difference between the first group mean and the other groups,
-summary(glm1)
+### Anova allow me to do hyphothesis testing
+# The ANOVA atable compares the fit of two models, the null model foraging~1 vs foraging~sociality+....
+## f test appropiate for quasipoisson distributions, and type3 anova order orthe term does not matter
+# test the null H that there is no differences in the foraging rate  among flocking and non-flocking individuals
+#Note: Use anova(test = "F"), ie an F test, if testing hypotheses that use gaussian, quasibinomial or quasipoisson link functions.
+#This is because the quasi-likelihood is not a real likelihood and the generalized log-likelihood ratio test is not accurate FROM dolph class
+#Anova type=3 rom the car package, in that case order of the terms in the model does not matter and neither does hirarchy
+
+
 #anova(model2, test="Chi") using the "best model" I guess i can use any of the two qasi or poisson since the stimates are the same?
 Anova(glm1, type = 3, test="F") 
 Anova(glmQ1, type = 3, test="F") 
+
+summary(glm2)
 
 #If I only include sociality in the model
 Anova(glm2, type = 3, test="F") 
@@ -309,10 +380,17 @@ Other way to do this no te the "a"
 anova (glm1,glm5, test="F")
 
 ## f test appropiate for quasipoisson distributions, and type3 anova order orthe term does not matter
-# test the null H that there is no differences in the foraging rate  among flocking and non-flocking individuals
-#Note: Use anova(test = "F"), ie an F test, if testing hypotheses that use gaussian, quasibinomial or quasipoisson link functions.
-#This is because the quasi-likelihood is not a real likelihood and the generalized log-likelihood ratio test is not accurate FROM dolph class
-#Anova type=3 rom the car package, in that case order of the terms in the model does not matter and neither does hirarchy
+
+
+############## END OF SCRIPT ##########################################
+
+
+
+
+
+
+
+
 
 # RESULTS F test if p<0.005 differences between groups are significant
 Analysis of Deviance Table (Type III tests)
