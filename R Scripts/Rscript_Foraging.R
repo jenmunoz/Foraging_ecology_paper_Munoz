@@ -1,6 +1,11 @@
 ###############################JENNY MUNOZ#####################################
 ###############################################################################
-###########Foraging ecology of residents and migrants##########################
+## Proyect Foraging ecology of residents and migrants
+## R-code for Generalized linear models
+## Jenny Munoz
+##
+## last update: February 20 2017
+################################################################################
 
 #Assumptions": 
 #check the R version
