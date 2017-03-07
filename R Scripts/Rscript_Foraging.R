@@ -24,7 +24,7 @@ library(ggplot2)
 library(car)
 library(visreg)
 library(dplyr)
-library(warbleR)
+#library(warbleR)
 library(vegan)
 library(permute)
 
@@ -242,11 +242,55 @@ glm5<-glm(foragingrate~1, data =fusca, family=poisson(link="log")) #Null model e
 glm6<-glm(foragingrate~sociality+dayofseason-1, data=fusca, family=poisson(link="log"))# Give me the log estimates of each group directly
 glm7<-update(glm1, . ~ . + dayofseason:sociality) # including an interaction in the model
 summary (glm6)
+summary(glm1)
 
 # Summary of the model allow me to interpret the estimates of the parameters (e.g effect sizes) in the model and the difference from cero and between them.
 # The summary give me the effect size. 
 summary(glm2)
 
+#### Model selection using  AICcmodavg
+library(AICcmodavg)
+
+###Model used  (glm1Q,glm2Q,glm3Q,glm4Q),
+aictab(list(glm1,glm2,glm3,glm4),
+       modnames=c("Socality+Seasonday",
+                  "Sociality",
+                  "Seasonday",
+                  "~"),
+       c.hat=1.97)
+
+summary (glm1)
+
+####Model selection based on QAICc:
+#(c-hat estimate = 1.97)
+
+#K  QAICc Delta_QAICc QAICcWt Cum.Wt Quasi.LL
+#Socality+Seasonday 4 252.65        0.00       1      1  -122.11
+#Sociality          3 263.55       10.90       0      1  -128.65
+#Seasonday          3 300.17       47.52       0      1  -146.96
+#~                  2 302.35       49.70       0      1  -149.11
+
+
+glm1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log")) 
+
+##### Evaluate the fit of additive the model
+
+pdf(file="figure2.pdf")
+stripchart (foragingrate~sociality, vertical=TRUE, data=foraging,method="jitter",jitter=0.1,ylab="foraging rate",xlab="sociality", pch=19,cex=0.8, ylim=c(0,20))
+stripchart(fitted(glm1)~foraging$sociality, vertical=TRUE,add=TRUE, pch="-",cex=2,method="jitter",col="black")
+points(c(1,2),mean, pch="-",col="red",cex=5)
+legend("bottomright", legend=c("fitted","observed mean"),bty="n",lwd=2,cex=0.8, col=c("black","red"), lty=c(1,1,1))
+dev.off()
+
+boxplot(fusca$foragingrate~fusca$sociality, main='Setophaga fusca',ylab='Capture rate/min',col="white",ylim=c(0,20))
+stripchart(fusca$foragingrate~fusca$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20), method="jitter, col="black")
+
+# Calculating teh explained deviance
+pseudo.R2<-(glm1$null.deviance-glm1$deviance)/glm1$null.deviance
+pseudo.R2
+#pseudoR2() explained deviance)=0.3489
+
+######################################################################################################
 #####Visualizing the data using ggplot!!!!
 
 library(ggplot2)
@@ -261,6 +305,31 @@ head(fusca)
 ggplot(fusca, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
   geom_point(aes(size = flocksizeind)) + 
   geom_smooth(method = "lm")
+
+## The best fitted model 
+ggplot(fusca, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
+  geom_point(aes(size = flocksizespecies)) + 
+  geom_smooth(method = "glm",fullrange=TRUE, method.args=list(family="quasipoisson")) + 
+  facet_wrap(~species, scales = "free") + 
+  theme_bw()
+#
+ggplot(fusca, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
+  geom_point(aes(size = flocksizespecies)) + 
+  geom_smooth(method = "glm", family="quasipoisson", formula= foraging~ sociality + dayofseason ) + 
+  facet_wrap(~species, scales = "free") + 
+  theme_bw()
+
+geom_smooth(method = "glm", formula = foragingrate~ sociality + dayofseason, method.args=list(family="quasipoisson"),data=fusca) +
+  
+plot (fusca$dayofseason,fusca$foragingrate, pch=19,
+      ylab="Number of species",xlab="dayofseason", xlim=c(0,40), col=as.numeric(fusca$sociality))
+groups <- levels(as.factor(fusca$sociality))     
+for(i in 1:length(groups)){
+  xi <- fusca$dayofseason[fusca$sociality==groups[i]]                  
+  yhati <- fitted(glm3)[fusca$sociality==groups[i]]       
+  lines(xi[order(xi)], yhati[order(xi)],col=as.numeric(i))}
+
+
 ### For all the species
 # Smooth linear
 ggplot(foraging, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
@@ -302,34 +371,7 @@ dfun<-function(glmQ1){with(glmQ1,sum((weights * residuals^2)[weights > 0])/df.re
 dfun(glmQ1)
 summary(glmQ1)    #also give me the overdispersion parameter
 
-##### Model selection using  AICcmodavg
-library(AICcmodavg)
-
-###Model used  (glm1Q,glm2Q,glm3Q,glm4Q),
-aictab(list(glm1,glm2,glm3,glm4),
-       modnames=c("Socality+Seasonday",
-                  "Sociality",
-                  "Seasonday",
-                  "~"),
-       c.hat=1.97)
-
-summary (glm1)
-
-####Model selection based on QAICc:
-#(c-hat estimate = 1.97)
-
-#K  QAICc Delta_QAICc QAICcWt Cum.Wt Quasi.LL
-#Socality+Seasonday 4 252.65        0.00       1      1  -122.11
-#Sociality          3 263.55       10.90       0      1  -128.65
-#Seasonday          3 300.17       47.52       0      1  -146.96
-#~                  2 302.35       49.70       0      1  -149.11
-
-
-# Calculating teh explained deviance
-pseudo.R2<-(glm1$null.deviance-glm1$deviance)/glm1$null.deviance
-pseudo.R2
-#pseudoR2() explained deviance)=0.3489
-
+#
 ### visualizing the  best model fit,  how to interprete this?
 visreg(glmQ1, type = "conditional") #using the median for the ther predictors
 visreg(glmQ1,"sociality", type = "conditional", xlim=c(0,40), ylim=c(0,30), scale = "response", ylab="",  xlab=NA) 
