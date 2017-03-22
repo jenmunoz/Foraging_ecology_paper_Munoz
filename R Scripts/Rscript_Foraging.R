@@ -1,7 +1,7 @@
 ###############################JENNY MUNOZ#####################################
 ###############################################################################
 ## Proyect Foraging ecology of residents and migrants
-## R-code for Generalized linear models
+## R-code for manuscript Generalized linear models
 ## Jenny Munoz
 ##
 ## last update: February 20 2017
@@ -48,7 +48,7 @@ which(is.na(foraging)==T)
 foraging$foragingrate<- as.numeric(foraging$foragingrate)
 foraging$sociality<- as.factor(foraging$sociality)
 foraging$flocksizespecies<- as.numeric(foraging$flocksizespecies)
-
+foraging$flocksizeind<- as.numeric(foraging$flocksizeind)
 #Filter the data using dplyr for each species
 foraging %>%
   filter(species == "Setophaga fusca")
@@ -259,7 +259,7 @@ aictab(list(glm1,glm2,glm3,glm4),
                   "~"),
        c.hat=1.97)
 
-summary (glm1)
+summary (glmQ1)
 
 ####Model selection based on QAICc:
 #(c-hat estimate = 1.97)
@@ -273,7 +273,16 @@ summary (glm1)
 
 glm1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log")) 
 
-##### Evaluate the fit of additive the model
+##### Evaluate the fit of Models
+
+
+stripchart (foragingrate~sociality, vertical=TRUE, data=foraging,pch=16,col=c("seagreen4","seagreen2","turquoise","skyblue1","royalblue","darkblue"),method="jitter",jitter=0.1,ylab="",xlab="")
+points(c(1,2,3,4,5,6),mean, pch="-",col="red",cex=5)
+stripchart(fitted(glm1)~foraging$foraging, vertical=TRUE,add=TRUE, pch="-",cex=2,method="jitter",col="black",na.strings=c("NA",""))
+stripchart(fitted(glm2)~foraging$sociality, vertical=TRUE,add=TRUE, pch="-",cex=2, method="jitter",col="tan1")
+stripchart(fitted(glm3)~foraging$sociality, vertical=TRUE,add=TRUE, pch="-",cex=2,method="jitter",col="gray")
+legend("bottomright", legend=c("additive model","dominance model","genotype model","observed mean"),bty="n",lwd=2,cex=0.8, col=c("black","tan1","gray","red"), lty=c(1,1,1))
+dev.off()
 
 pdf(file="figure2.pdf")
 stripchart (foragingrate~sociality, vertical=TRUE, data=foraging,method="jitter",jitter=0.1,ylab="foraging rate",xlab="sociality", pch=19,cex=0.8, ylim=c(0,20))
@@ -283,7 +292,7 @@ legend("bottomright", legend=c("fitted","observed mean"),bty="n",lwd=2,cex=0.8, 
 dev.off()
 
 boxplot(fusca$foragingrate~fusca$sociality, main='Setophaga fusca',ylab='Capture rate/min',col="white",ylim=c(0,20))
-stripchart(fusca$foragingrate~fusca$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20), method="jitter, col="black")
+stripchart(fusca$foragingrate~fusca$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20), method="jitter", col="black")
 
 # Calculating teh explained deviance
 pseudo.R2<-(glm1$null.deviance-glm1$deviance)/glm1$null.deviance
@@ -313,20 +322,34 @@ ggplot(fusca, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
   facet_wrap(~species, scales = "free") + 
   theme_bw()
 #
-ggplot(fusca, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
+ggplot(fusca, aes(x = dayofseason, y = foragingrate, z= sociality, colour = sociality)) +
   geom_point(aes(size = flocksizespecies)) + 
-  geom_smooth(method = "glm", family="quasipoisson", formula= foraging~ sociality + dayofseason ) + 
+  geom_smooth(method= "glm", formula = foragingrate ~ sociality + dayofseason, family = quasipoisson(link = "log") + 
+  facet_wrap(~species, scales = "free") 
+  
+  
+ggplot(fusca, aes(x = dayofseason, y = foragingrate, colour=sociality)) +
+  geom_point(aes(size = flocksizespecies)) + 
+  geom_smooth(method = "glm", family="quasipoisson", formula= foraging~sociality + dayofseason ) + 
   facet_wrap(~species, scales = "free") + 
   theme_bw()
 
 geom_smooth(method = "glm", formula = foragingrate~ sociality + dayofseason, method.args=list(family="quasipoisson"),data=fusca) +
-  
+
 plot (fusca$dayofseason,fusca$foragingrate, pch=19,
       ylab="Number of species",xlab="dayofseason", xlim=c(0,40), col=as.numeric(fusca$sociality))
+lm2<-lm(foragingrate~dayofseason+sociality, data= foraging) 
+abline(lm2)
+
+plot(Numspecies~Mean_canopy_H, data=flocksd)
+model<-lm(Numspecies~Mean_canopy_H, data=flocksd)
+abline(model, col="red", cex=7)
+summary(model)
+
 groups <- levels(as.factor(fusca$sociality))     
 for(i in 1:length(groups)){
   xi <- fusca$dayofseason[fusca$sociality==groups[i]]                  
-  yhati <- fitted(glm3)[fusca$sociality==groups[i]]       
+  yhati <- fitted(glm1)[fusca$sociality==groups[i]]       
   lines(xi[order(xi)], yhati[order(xi)],col=as.numeric(i))}
 
 
@@ -334,7 +357,7 @@ for(i in 1:length(groups)){
 # Smooth linear
 ggplot(foraging, aes(x = dayofseason, y = foragingrate, colour = sociality)) +
   geom_point(aes(size = flocksizeind)) + 
-  geom_smooth(method = "lm")+ 
+  geom_smooth(method = "glm")+ 
   facet_wrap(~species, scales = "free") + 
   theme_bw()
 
@@ -379,7 +402,7 @@ par(new = TRUE)
 plot(foragingrate~sociality, data=fusca, ylab="foraging rate ", xlab="Sociality", main="a) Dendroica fusca ",pch=16, cex=1.3, ylim=c(0,30), xlim=c(0,40))
 
 visreg(glm1, type="conditional", scale="response", ylim=c(0,40), ylab="Foraging rate", pch=1,rug=0, whitespace=0.6, par=TRUE
-par(new = TRUE)
+par(new = TRUE),
 stripchart(fusca$foragingrate ~ fusca$sociality, method='jitter', vertical=TRUE, pch=19, cex=0.8, ylim=c(0,40), ylab="", whitespace=0.6)
 str(fusca)
 
@@ -428,15 +451,39 @@ anova (glm1,glm5, test="F")
 
 ## f test appropiate for quasipoisson distributions, and type3 anova order orthe term does not matter
 
+##########################################################################
+#Results for manuscript
+###########################################################################
+#1. Mixed species flocks
+#Filter only the flock data
+flocks<-filter(foraging,sociality=="Flock")
+flockfeatures<-na.omit(flocks)                             #omit NA values
+summarise_each(flockfeatures,funs(mean))                   #Summarise all the columns
+summarise(flockfeatures,mean(flocksizespecies))            #Summarise flock size 
+summarise(flockfeatures,mean(flocksizeind))                #mean
+summarise(flockfeatures,sd(flocksizespecies))              #standard deviation
+summarise(flockfeatures,sd(flocksizeind)) 
+
+summarise(flockfeatures,max(flocksizespecies))             #max and mins
+summarise(flockfeatures,min(flocksizespecies))
+summarise(flockfeatures,max(flocksizeind))
+summarise(flockfeatures,min(flocksizeind))
+
+#Normality of the variables
+hist(flockfeatures$flocksizespecies)
+hist(flockfeatures$flocksizeind)
+qqnorm(flockfeatures$flocksizeind) #normality
+qqline(flockfeatures$flocksizeind, lty=2)
+qqnorm(flockfeatures$flocksizespecies) #normality
+qqline(flockfeatures$flocksizespecies, lty=2)
+
+#Correlation test
+#The alternative hypothesis of interest is that the flocksize is positively associated with the flockind.
+cor.test(flockfeatures$flocksizespecies, flockfeatures$flocksizeind, method="kendall", alternative="greater")
+
+#2.
 
 ############## END OF SCRIPT ##########################################
-
-
-
-
-
-
-
 
 
 # RESULTS F test if p<0.005 differences between groups are significant
