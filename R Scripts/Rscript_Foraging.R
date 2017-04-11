@@ -15,8 +15,6 @@ install.packages("car")
 install.packages("vegan")
 install.packages("AICcmodavg")
 
-
-
 # Loading packages --------------------------------------------------------
 ##general packages  and visualization
 library(lattice)
@@ -50,6 +48,7 @@ foraging$foragingrate<- as.numeric(foraging$foragingrate)
 foraging$sociality<- as.factor(foraging$sociality)
 foraging$flocksizespecies<- as.numeric(foraging$flocksizespecies)
 foraging$flocksizeind<- as.numeric(foraging$flocksizeind)
+
 #Filter the data using dplyr for each species
 foraging %>%
   filter(species == "Setophaga fusca")
@@ -163,9 +162,6 @@ foraging$foragingrate<- as.numeric(foraging$foragingrate)
 foraging$sociality<- as.factor(foraging$sociality)
 foraging$flocksizespecies<- as.numeric(foraging$flocksizespecies)
 
-
-
-glm1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log")) 
 
 ##### Evaluate the fit of Models
 
@@ -313,42 +309,17 @@ str(fusca)
 #the first one is the mean of the first group type, the others are the difference between the first group mean and the other groups,
 summary(glm2)
 
-#are the difference in foraging rate statistically significant? USING
-glm1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log")) 
-glmQ1<-update(glm1, family=quasipoisson(link="log"))
-
-### Anova allow me to do hyphothesis testing
-# The ANOVA atable compares the fit of two models, the null model foraging~1 vs foraging~sociality+....
-## f test appropiate for quasipoisson distributions, and type3 anova order orthe term does not matter
-# test the null H that there is no differences in the foraging rate  among flocking and non-flocking individuals
-#Note: Use anova(test = "F"), ie an F test, if testing hypotheses that use gaussian, quasibinomial or quasipoisson link functions.
-#This is because the quasi-likelihood is not a real likelihood and the generalized log-likelihood ratio test is not accurate FROM dolph class
-#Anova type=3 rom the car package, in that case order of the terms in the model does not matter and neither does hirarchy
-
-
-#anova(model2, test="Chi") using the "best model" I guess i can use any of the two qasi or poisson since the stimates are the same?
-Anova(glm1, type = 3, test="F") 
-Anova(glmQ1, type = 3, test="F") 
-
-summary(glm2)
-
-#If I only include sociality in the model
-Anova(glm2, type = 3, test="F") 
-Anova(glmQ2, type = 3, test="F") 
-
-summary(glmQ2)
-
-
-#Other way to do this no te the "a"
-anova (glm1,glm5, test="F")
-
-## f test appropiate for quasipoisson distributions, and type3 anova order orthe term does not matter
-
+###################################################################################################
+###################################################################################################
 ##########################################################################
-#Results for manuscript
+#                Results for manuscript
 ###########################################################################
+###################################################################################################
 
+
+###################################################################################################
 #1. Mixed species flocks features
+###################################################################################################
 
 #Filter only the flock data
 flocks<-filter(foraging,sociality=="Flock")
@@ -380,9 +351,12 @@ qqline(flockfeatures$flocksizespecies, lty=2)
 #The alternative hypothesis of interest is that the flocksize is positively associated with the flockind.
 cor.test(flockfeatures$flocksizespecies, flockfeatures$flocksizeind, method="kendall", alternative="greater")
 
+###################################################################################################
 ################################################
-#2. # Model fit, assumptions and model selection ------------------------------
+#2.  Influence of social context in capture rate
+# Model fit, assumptions and model selection ------------------------------
 ################################################
+###################################################################################################
 
 ######Fit the model
 ### Using two predictors
@@ -452,7 +426,7 @@ glm1<-glm(foragingrate~sociality+dayofseason, data =peregrina,family=poisson(lin
 glm1<-glm(foragingrate~sociality+dayofseason, data =canadensis,family=poisson(link="log"))
 glm1<-glm(foragingrate~sociality+dayofseason, data =cerulea,family=poisson(link="log"))
 
-glm1<-glm(foragingrate~sociality+dayofseason, data =chrysops,family=poisson(link="log"))
+glm1<-glm(foragingrate~sociality+dayofseason, data =chrysops,family=poisson(link="log")) 
 glm1<-glm(foragingrate~sociality+dayofseason, data =guira,family=poisson(link="log"))
 glm1<-glm(foragingrate~sociality+dayofseason, data =pitiayumi,family=poisson(link="log"))
 
@@ -469,12 +443,12 @@ glm5<-glm(foragingrate~1, data =fusca, family=poisson(link="log")) #Null model e
 #Interesting models
 glm6<-glm(foragingrate~sociality+dayofseason-1, data=fusca, family=poisson(link="log"))# Give me the log estimates of each group directly
 glm7<-update(glm1, . ~ . + dayofseason:sociality) # including an interaction in the model
-summary (glm6)
-summary(glmQ1)
 
 # Summary of the model allow me to interpret the estimates of the parameters (e.g effect sizes) in the model and the difference from cero and between them.
 # The summary give me the effect size. 
 summary(glm2)
+summary (glm6)
+summary(glmQ1)
 
 #####overdisperssion parameters 
 dfun<-function(glmQ1q){with(glmQ1,sum((weights * residuals^2)[weights > 0])/df.residual)}
@@ -488,13 +462,13 @@ summary(glmQ1)
 #canadensis=1.56
 #pitiayumi=1.67
 #guira=2.92
-#chrysops= 
+#chrysops= na
 
 
 #### Model selection using  AICcmodavg
 library(AICcmodavg)
 
-###Model used  (glm1Q,glm2Q,glm3Q,glm4Q), for all the species which have overdispersed datta
+###Model used  (glm1Q,glm2Q,glm3Q,glm4Q), for all the species which have overdispersed datta, remember to use the glm models instead of glmQ
 aictab(list(glm1,glm2,glm3,glm4),
        modnames=c("Socialcontext+Dayofseason",
                   "Socialcontext",
@@ -513,17 +487,17 @@ aictab(list(glm1,glm2,glm3,glm4),
                   "Intercept"))
 
 
-#######SUMMARY TABLE
+#4.   ######SUMMARY TABLE
 #A beautiful table in html for the parameters of glm models
 #For the parameter stimates we need to consider the models with the Quasipoisson distribution, the points estimates are identical
 # to the model with poisson distribution but the standard error and confidence intervals are wider!
 sjt.glm(glmQ1,glmQ2,glmQ3,
-        depvar.labels = c("Model1: Socialcontext+Dayofseason","Model2:Socialcontext","Model3:Dayofseason"),
+        depvar.labels = c("Model1: Socialcontext+Dayofseason","Model2:Socialcontext","Model3:Day of season"),
         pred.labels = NULL,
         show.aicc=TRUE, 
         show.family=TRUE, 
         group.pred = FALSE,
-        exp.coef = FALSE,  # if true Regression and cof.intervals are exponentiaded st.error are not in the unstransformed scale
+        exp.coef = TRUE,  # if true Regression and cof.intervals are exponentiaded st.error are not in the unstransformed scale
         p.numeric=TRUE,
         robust = TRUE,
         show.se = TRUE,
@@ -533,7 +507,7 @@ sjt.glm(glmQ1,glmQ2,glmQ3,
         cell.spacing = 0.001,
         sep.column = FALSE)
 
-# A pvalue less than 0.05 indicates a good model fit 
+# A pvalue less than 0.05 indicates a good model fit ?
 # Summary of any model 
 summary (glm2)
 ###To underestand the summary(glm) and the table with the estimate for sethophaga fusca.
@@ -542,14 +516,114 @@ summary (glm2)
 # will eat 3.15 times more than solitary * 0.03 times the day of the season. Or what is the same a  solitary individual of fusca will eat exp(-1.33)= 0.26 times less what it will eat when in flocks~ 26% less
 
 #The model  will be for fusca f.rate= exp [1.27]* exp[-1.33]*exp[0.03 * #day of the season]
+# To extract the parameters manually
+glmQ1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log"))
+summary(glmQ1)
+coef(glmQ1)
+exp(coef(glmQ1))
+exp(confint.default(glmQ1)) 
+# to calculate confidence intervals manually
+library(MASS)
+exp (confint(glmQ1, level = 0.95))
 
 
+#Hypothesis testing using ANOVA, are the difference in foraging rate statistically significant? USING
+glm1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log")) 
+glmQ1<-update(glm1, family=quasipoisson(link="log"))
 
-exp(1.15)
-log(1.65)-log(5.25)
+### Anova allow me to do hyphothesis testing
+# The ANOVA atable compares the fit of two models, the null model foraging~1 vs foraging~sociality+....
+## f test appropiate for quasipoisson distributions, and type3 anova order orthe term does not matter
+# test the null H that there is no differences in the foraging rate  among flocking and non-flocking individuals
+#Note: Use anova(test = "F"), ie an F test, if testing hypotheses that use gaussian, quasibinomial or quasipoisson link functions.
+#This is because the quasi-likelihood is not a real likelihood and the generalized log-likelihood ratio test is not accurate FROM dolph class
+#Anova type=3 rom the car package, in that case order of the terms in the model does not matter and neither does hirarchy
+
+#anova(model2, test="Chi") using the "best model" I guess i can use any of the two qasi or poisson since the stimates are the same?
+### For the migrants 
+glm1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log"))
+glmQ1<-update(glm1, family=quasipoisson(link="log"))
+Anova(glmQ1, type = 3, test="F")
+
+glm1<-glm(foragingrate~sociality+dayofseason, data =peregrina,family=poisson(link="log"))
+glmQ1<-update(glm1, family=quasipoisson(link="log"))
+Anova(glmQ1, type = 3, test="F")
+
+glm1<-glm(foragingrate~sociality+dayofseason, data =canadensis,family=poisson(link="log"))
+glmQ1<-update(glm1, family=quasipoisson(link="log"))
+Anova(glmQ1, type = 3, test="F")
+
+glm1<-glm(foragingrate~sociality+dayofseason, data =cerulea,family=poisson(link="log"))
+glmQ1<-update(glm1, family=quasipoisson(link="log"))
+Anova(glmQ1, type = 3, test="F")
+
+#For the residents
+glm1<-glm(foragingrate~sociality+dayofseason, data =chrysops,family=poisson(link="log")) 
+glm2<-update(glm1, . ~ . - dayofseason) #social context
+Anova(glmQ2, type = 3, test="F") 
+
+glm1<-glm(foragingrate~sociality+dayofseason, data =pitiayumi,family=poisson(link="log")) 
+glm2<-update(glm1, . ~ . - dayofseason) #social context
+glmQ2<-update(glm2, family=quasipoisson(link="log"))
+Anova(glmQ2, type = 3, test="F") 
+
+glm1<-glm(foragingrate~sociality+dayofseason, data =guira,family=poisson(link="log")) 
+glm2<-update(glm1, . ~ . - dayofseason) #social context
+glmQ2<-update(glm2, family=quasipoisson(link="log"))
+Anova(glmQ2, type = 3, test="F") 
+
+
+#Other way to do this no te the "a"
+anova (glm1,glm5, test="F") # BEING glm5 the null model 
+
+## f test appropiate for quasipoisson distributions, and type3 anova order orthe term does not matter
+
+# To test a H, using Anova
+Anova(glmmodel2, type = 3, test="F") 
+
+
+#Examining the fit of the best model for each species graphically
+#canadensis 
+glm1<-glm(foragingrate~sociality+dayofseason, data =canadensis,family=poisson(link="log"))
+glm2<-update(glm1, . ~ . - dayofseason) #social context
+glmQ2<-update(glm2, family=quasipoisson(link="log"))
+plot(glmQ2)
+?visreg()
+stripchart(canadensis$foragingrate~ canadensis$sociality, method='jitter', vertical=TRUE, pch=19, cex=0.8, ylim=c(0,50), ylab="",whitespace=0.6)
+par(new = TRUE)
+visreg(glmQ2, type="conditional", scale="response", ylim=c(0,50), ylab="Capture rate", pch=1,rug=0, whitespace=0.6)
+
+#cerulea
+glm1<-glm(foragingrate~sociality+dayofseason, data =cerulea,family=poisson(link="log"))
+glmQ1<-update(glm1, family=quasipoisson(link="log"))
+plot(glmQ1)
+?visreg()
+stripchart(cerulea$foragingrate~ cerulea$sociality, method='jitter', vertical=TRUE, pch=19, cex=0.8, ylim=c(0,50), ylab="",whitespace=0.6)
+par(new = TRUE)
+visreg(glmQ1, type="conditional", scale="response", ylim=c(0,50), ylab="Capture rate", pch=1,rug=0, whitespace=0.6)
+
+#fusca
+glm1<-glm(foragingrate~sociality+dayofseason, data =fusca,family=poisson(link="log"))
+glmQ1<-update(glm1, family=quasipoisson(link="log"))
+plot(glmQ1)
+?visreg()
+stripchart(fusca$foragingrate~ fusca$sociality, method='jitter', vertical=TRUE, pch=19, cex=0.8, ylim=c(0,50), ylab="",whitespace=0.6)
+par(new = TRUE)
+visreg(glmQ1, type="conditional", scale="response", ylim=c(0,50), ylab="Capture rate", pch=1,rug=0, whitespace=0.6)
+
+
+#peregrina
+glm1<-glm(foragingrate~sociality+dayofseason, data =peregrina,family=poisson(link="log"))
+glmQ1<-update(glm1, family=quasipoisson(link="log"))
+plot(glmQ1)
+?visreg()
+stripchart(peregrina$foragingrate~ peregrina$sociality, method='jitter', vertical=TRUE, pch=19, cex=0.8, ylim=c(0,50), ylab="",whitespace=0.6)
+par(new = TRUE)
+visreg(glmQ1, type="conditional", scale="response", ylim=c(0,50), ylab="Capture rate", pch=1,rug=0, whitespace=0.6)
+
 
 ###################################
-# With three predictors
+# With three predictors not used in the first versin of the paper
 ###################################
 glm1a<-glm(foragingrate~sociality+dayofseason+flocksizespecies, data =fusca,family=poisson(link="log"))
 glm1a<-glm(foragingrate~sociality+dayofseason+flocksizespecies, data =peregrina,family=poisson(link="log"))
@@ -608,6 +682,261 @@ aictab(list(glm1a,glm2a,glm3a,glm4a,glm5a,glm6a,glm7a,glm8a),
                   "Intercept"),
        c.hat=3.08) # need to change for the overdispersion for each species
 summary (glmQ5a)
+
+
+#5##################################################################################################
+###################################################################################################
+# Influence of sociality in the movement rate 
+###################################################################################################
+###################################################################################################
+
+# With two predictors
+#Migrants
+glm1m<-glm(movementrate~sociality+dayofseason, data =fusca,family=poisson(link="log")) #full model fusca
+glm1m<-glm(movementrate~sociality+dayofseason, data =peregrina,family=poisson(link="log"))
+glm1m<-glm(movementrate~sociality+dayofseason, data =canadensis,family=poisson(link="log"))
+glm1m<-glm(movementrate~sociality+dayofseason, data =cerulea,family=poisson(link="log"))
+#Resident
+glm1m<-glm(movementrate~sociality+dayofseason, data =chrysops,family=poisson(link="log")) 
+glm1m<-glm(movementrate~sociality+dayofseason, data =guira,family=poisson(link="log"))
+glm1m<-glm(movementrate~sociality+dayofseason, data =pitiayumi,family=poisson(link="log"))
+
+glm2m<-update(glm1m, . ~ . - dayofseason) #social context
+glm3m<-update(glm1m, . ~ . - sociality) #day of season
+glm4m<-update(glm3m, . ~ . - dayofseason) #Null or intercept model
+glmQ1m<-update(glm1m, family=quasipoisson(link="log"))
+glmQ2m<-update(glm2m, family=quasipoisson(link="log"))
+glmQ3m<-update(glm3m, family=quasipoisson(link="log"))
+glmQ4m<-update(glm4m, family=quasipoisson(link="log"))
+
+#glm5<-glm(foragingrate~1, data =fusca, family=poisson(link="log")) #Null model equivalent to glm2 long version
+
+# To extract summary and coefficients of the data
+summary(glmQ1m)
+coef(glmQ1m)
+exp(coef(glmQ1m))
+summary(glmQ2m)
+summary(glmQ3m)
+summary(glmQ4m)
+
+#####overdisperssion parameters 
+dfun<-function(glmQ1qm){with(glmQ1m,sum((weights * residuals^2)[weights > 0])/df.residual)}
+dfun(glmQ1m)
+
+#fusca=1.77
+#cerulea=2.51
+#peregrina=1.89
+#canadensis=2.96
+#pitiayumi= 2.42
+#guira=2.42
+#chrysops= 2.44
+
+#### Model selection using  AICcmodavg
+library(AICcmodavg)
+
+###Model used  (glm1Qm,glm2Qm,glm3Qm,glm4Qm), for all the species which have overdispersed datta
+
+aictab(list(glm1m,glm2m,glm3m,glm4m),
+       modnames = c("Socialcontext+Dayofseason",
+                    "Social context",
+                    "Day of season",
+                    "Intercept"),
+       c.hat=2.42)
+
+
+
+
+#### To make the table for AIC cfor species that are not overdisperssed
+
+aictab(list(glm1,glm2,glm3,glm4),
+       modnames=c("Socialcontext+Dayofseason",
+                  "Socialcontext",
+                  "Dayofseason",
+                  "Intercept"))
+
+
+#4.   ######SUMMARY TABLE
+#A beautiful table in html for the parameters of glm models
+#For the parameter stimates we need to consider the models with the Quasipoisson distribution, the points estimates are identical
+# to the model with poisson distribution but the standard error and confidence intervals are wider!
+sjt.glm(glmQ1m,glmQ2m,glmQ3m,
+        depvar.labels = c("Model1: Socialcontext+Dayofseason","Model2:Socialcontext","Model3:Day of season"),
+        pred.labels = NULL,
+        show.aicc=TRUE, 
+        show.family=TRUE, 
+        group.pred = FALSE,
+        exp.coef = TRUE,  # if true Regression and cof.intervals are exponentiaded st.error are not in the unstransformed scale
+        p.numeric=TRUE,
+        robust = TRUE,
+        show.se = TRUE,
+        show.r2=TRUE,
+        show.dev=TRUE,
+        show.chi2=TRUE,
+        cell.spacing = 0.001,
+        sep.column = FALSE)
+
+
+#Hypothesis testing using Anova
+#fusca
+glm1m<-glm(movementrate~sociality+dayofseason, data =fusca,family=poisson(link="log")) #full model fusca
+glmQ1m<-update(glm1m, family=quasipoisson(link="log"))
+glm2m<-update(glm1m, . ~ . - dayofseason) #social context
+glm3m<-update(glm1m, . ~ . - sociality) #day of season
+glmQ3m<-update(glm3m, family=quasipoisson(link="log"))
+
+Anova(glmQ1m, type = 3, test="F")
+
+#peregrina
+glm1m<-glm(movementrate~sociality+dayofseason, data =peregrina,family=poisson(link="log")) #full model fusca
+glmQ1m<-update(glm1m, family=quasipoisson(link="log"))
+summary(glmQ1m)
+Anova(glmQ1m, type = 3, test="F")
+
+#canadensis
+glm1m<-glm(movementrate~sociality+dayofseason, data =canadensis,family=poisson(link="log")) #full model fusca
+glmQ1m<-update(glm1m, family=quasipoisson(link="log"))
+glm2m<-update(glm1m, . ~ . - dayofseason) #social context
+glm3m<-update(glm1m, . ~ . - sociality) #day of season
+glmQ3m<-update(glm3m, family=quasipoisson(link="log"))
+
+Anova(glmQ1m, type = 3, test="F")
+
+#cerulea the best model is the null model!!!
+
+#chrysops
+glm1m<-glm(movementrate~sociality+dayofseason, data =chrysops,family=poisson(link="log")) #full model fusca
+glmQ1m<-update(glm1m, family=quasipoisson(link="log"))
+summary(glmQ1m)
+Anova(glmQ1m, type = 3, test="F")
+
+#parula
+glm1m<-glm(movementrate~sociality+dayofseason, data =pitiayumi,family=poisson(link="log"))
+glm2m<-update(glm1m, . ~ . - dayofseason) #social context
+glmQ2m<-update(glm2m, family=quasipoisson(link="log"))
+
+Anova(glmQ2m, type = 3, test="F")
+
+
+# With three predictors not used in the first versin of the paper
+###################################
+
+glm1a<-glm(movementrate~sociality+dayofseason+flocksizespecies, data =fusca,family=poisson(link="log"))
+glm1a<-glm(movementrate~sociality+dayofseason+flocksizespecies, data =peregrina,family=poisson(link="log"))
+glm1a<-glm(movementrate~sociality+dayofseason+flocksizespecies, data =canadensis,family=poisson(link="log"))
+glm1a<-glm(movementrate~sociality+dayofseason+flocksizespecies, data =cerulea,family=poisson(link="log"))
+
+glm1a<-glm(movementrate~sociality+dayofseason+flocksizespecies, data =chrysops,family=poisson(link="log"))
+glm1a<-glm(movementrate~sociality+dayofseason+flocksizespecies, data =guira,family=poisson(link="log"))
+glm1a<-glm(movementrate~sociality+dayofseason+flocksizespecies, data =pitiayumi,family=poisson(link="log"))
+
+glm2a<-update(glm1a, . ~ . - sociality) # dayofseason + flocksize
+glm3a<-update(glm1a, . ~ . - dayofseason) #sociality + flocksize
+glm4a<-update(glm1a, . ~ . - flocksizespecies) # sociality+dayofseason
+glm5a<-update(glm2a, . ~ . - dayofseason) # flocksize
+glm6a<-update(glm2a, . ~ . - flocksizespecies) #dayofseason
+glm7a<-update(glm4a, . ~ . - dayofseason )  #sociality
+glm8a<-update(glm7a, . ~ . - sociality)  #intercept Equivalent to null model glm(movementrate~1, data =fusca, family=poisson(link="log"))
+glmQ1a<-update(glm1a, family=quasipoisson(link="log"))
+glmQ2a<-update(glm2a, family=quasipoisson(link="log"))
+glmQ3a<-update(glm3a, family=quasipoisson(link="log"))
+glmQ4a<-update(glm4a, family=quasipoisson(link="log"))
+glmQ5a<-update(glm5a, family=quasipoisson(link="log"))
+glmQ6a<-update(glm6a, family=quasipoisson(link="log"))
+glmQ7a<-update(glm7a, family=quasipoisson(link="log"))
+glmQ8a<-update(glm8a, family=quasipoisson(link="log"))
+
+
+aictab(list(glm1a,glm2a,glm3a,glm4a,glm5a,glm6a,glm7a,glm8a),
+       modnames=c("Socialcontext+Dayofseason+Flocksize",
+                  "Dayofseason+Flocksize",
+                  "Socialcontext+Flocksize",
+                  "Socialcontext+dayofseason",
+                  "Flocksize",
+                  "Dayofseason",
+                  "Socialcontext",
+                  "Intercept"),
+       c.hat=1.92)
+
+summary(glmQ1a)
+
+#5##################################################################################################
+###################################################################################################
+# Foraging maneuvers
+###################################################################################################
+##############################################################################################
+
+###Load Lattice ###
+library(lattice)
+library(dplyr)
+library(dev2bitmap)
+#reading the data
+maneuvers<-read.csv(file.choose("maneuver"),stringsAsFactors=FALSE,strip.white=TRUE,na.strings=c("NA",""))
+
+#filtering data
+
+#fuscamaneuver<-filter(maneuvers,species=="Setophaga fusca")
+#parulamaneuver<-filter(maneuvers,species=="Parula pitiayumi")
+
+#variables as factors
+maneuvers$context<-as.factor(maneuvers$context)
+
+### Barchart for species, I can vary the number of columns and rows, and by using the driver command with dimensions, I can make the graph to fit my desire lenght###
+barchart(proportion~maneuver|species,data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5,col="gray")
+
+# using context as a grouping category
+barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, auto.key=TRUE)
+# in gay colors
+barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+barchart(percentage~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,100),box.ratio=1.5, col=c("grey","white"))
+
+pdf(file="Figure maneuvers.pdf",width=8,height=10)
+barchart(percentage~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,100),box.ratio=1.5, col=c("grey","white"))
+dev.off()
+
+tiff("Plotmaneuvers.tiff", res = 300, width =1000 , height =1015 )
+barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+dev.off()
+
+####################################
+#Substrate
+####################################
+
+#reading the data
+substrate<-read.csv(file.choose("substrate"),stringsAsFactors=FALSE,strip.white=TRUE,na.strings=c("NA",""))
+
+#variables as factors
+substrate$context<-as.factor(substrate$context)
+str(substrate)
+
+# in gay colors
+barchart(proportion~substrate|species, groups=context, data=substrate, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, auto.key=TRUE)
+barchart(proportion~substrate|species, groups=context, data=substrate, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+barchart(percentage~substrate|species, groups=context, data=substrate, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,100),box.ratio=1.5, col=c("grey","white"))
+
+pdf(file="Figure substrate2.pdf",width=12,height=8)
+barchart(percentage~substrate|species, groups=context, data=substrate, layout=c(3,2),scale=list(x=list(rot=0,cex=0.7),y=list(cex=0.7)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,100),box.ratio=1.5, col=c("grey","white"))
+dev.off()
+
+#Note remember to order by aerial and non aerial for easier analyises
+
+#5##################################################################################################
+###################################################################################################
+# The effect of group size 
+###################################################################################################
+##############################################################################################
+library(dplyr)
+flocks<-filter(foraging,sociality=="flocks")
+flocks
+#note neeed to exclude solitary individuals
+ggplot(foraging, aes(flocksizeind, foragingrate)) + xlab("X variable name") + ylab("Y variable name") +
+  geom_point(col = "black", size = I(2)) +
+  geom_smooth(method = glm, size = I(1), se = FALSE, col = "black") +
+  facet_wrap(~species, ncol = 0)
+
+ggplot(foraging, aes(flocksizeind, movementrate)) + xlab("X variable name") + ylab("Y variable name") +
+  geom_point(col = "black", size = I(2)) +
+  geom_smooth(method = glm, size = I(1), se = FALSE, col = "black") +
+  facet_wrap(~species, ncol = 0)
 
 
 ############## END OF SCRIPT ##########################################
@@ -740,3 +1069,37 @@ ggplot(foraging, aes(flocksizespecies, foragingrate)) + xlab("X variable name") 
   geom_point(col = "black", size = I(2)) +
   geom_smooth(method = lm, size = I(1), se = FALSE, col = "black") +
   facet_wrap(~species, ncol = 0)
+
+3.54*0.26
+4.27*0.15
+3.98*0.09
+4.14*0.25
+3.41*0.40
+
+a<-3.54/0.9204
+b<-4.27/0.6405
+c<-3.98/0.3582
+d<-4.14/1.035
+e<-3.41/1.364
+
+a
+b
+c
+d
+e
+
+mean(a,b,c,d,e)
+
+f<-(a+b+c+d+e)
+f/5
+
+16.46*1.21
+28.75*0.77
+7.61*0.68
+
+16.46/19.9166
+28.75/22.1375
+7.61/5.1748
+
+19.9166/16.46
+
