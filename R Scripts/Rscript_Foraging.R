@@ -58,6 +58,15 @@ str(foraging)
 which(is.na(foraging)==T)
 foraging
 
+#Converting variables as needed
+foraging$sociality<- as.factor(foraging$sociality) 
+foraging$movement<-as.numeric(foraging$movement)
+foraging$capture<-as.numeric(foraging$capture)
+foraging$capture<-as.integer(foraging$capture)
+foraging$flocksizespecies<- as.numeric(foraging$flocksizespecies)
+foraging$flocksizeind<- as.numeric(foraging$flocksizeind)
+foraging$dayofseason<- as.integer(foraging$dayofseason)
+
 ###################################
 # Filtering the data
 ###################################
@@ -72,14 +81,7 @@ guira<-filter(foraging,species=="Hemithraupis guira")
 chrysops<-filter(foraging,species=="Zimmerius chrysops")
 pitiayumi<-filter(foraging,species=="Parula pitiayumi")
 canadensis<-filter(foraging, species=="Cardelina canadensis")
-#Converting variables as needed
-foraging$sociality<- as.factor(foraging$sociality) 
-foraging$movement<-as.numeric(foraging$movement)
-foraging$capture<-as.numeric(foraging$capture)
-foraging$capture<-as.integer(foraging$capture)
-foraging$flocksizespecies<- as.numeric(foraging$flocksizespecies)
-foraging$flocksizeind<- as.numeric(foraging$flocksizeind)
-foraging$dayofseason<- as.integer(foraging$dayofseason)
+
 
 ###################################
 #####################Checking model assumptions and data distributions
@@ -185,11 +187,11 @@ cor.test(flockfeatures$flocksizespecies, flockfeatures$flocksize)
 ##### Model selection 
 glm1<-glm(capture~sociality+dayofseason, data=fusca,family=poisson(link="log"), offset=log(minutes))
 
-glm1<-glm(capture~sociality+dayofseason, data=canadensis1,family=poisson(link="log"), offset=log(minutes))
-glm1<-glm(capture~sociality+dayofseason, data=cerulea1,family=poisson(link="log"), offset=log(minutes)) #Overdisspersion to high model innacurat, small sample size
-glm1<-glm(capture~sociality+dayofseason, data=peregrina1,family=poisson(link="log"), offset=log(minutes))
-glm1<-glm(capture~sociality+dayofseason, data=pitiayumi1,family=poisson(link="log"), offset=log(minutes))
-glm1<-glm(capture~sociality+dayofseason, data=guira1,family=poisson(link="log"), offset=log(minutes))
+glm1<-glm(capture~sociality+dayofseason, data=canadensis,family=poisson(link="log"), offset=log(minutes))
+glm1<-glm(capture~sociality+dayofseason, data=cerulea,family=poisson(link="log"), offset=log(minutes)) #Overdisspersion to high model innacurat, small sample size
+glm1<-glm(capture~sociality+dayofseason, data=peregrina,family=poisson(link="log"), offset=log(minutes))
+glm1<-glm(capture~sociality+dayofseason, data=pitiayumi,family=poisson(link="log"), offset=log(minutes))
+glm1<-glm(capture~sociality+dayofseason, data=guira,family=poisson(link="log"), offset=log(minutes))
 glm1<-glm(capture~sociality+dayofseason, data=chrysops1,family=poisson(link="log"), offset=log(minutes))
 
 glm2<-update(glm1, . ~ . - dayofseason) #social context
@@ -426,7 +428,7 @@ Anova(glmQ2m, type = 3, test="F")
 summary (glmQ2m)
 
 ###################################################################################################
-# The effect of group size -----------------------------------------------
+#3 The effect of group size -----------------------------------------------
 ##################################################################################################
 #### 
 library(dplyr)
@@ -477,7 +479,7 @@ aictab(list(glm1fs,glm2fs,glm3fs,glm4fs),
                   "FlockSizeSpecies",
                   "Intercept",
                   "poly"),
-       c.hat=1.05)
+       c.hat=2.50)
 
 aictab(list(glm1fs,glm2fs,glm3fs),
        modnames=c("FlockSizeSpecies+POLY",
@@ -526,16 +528,17 @@ str(foraging)
 ####1. Plot foraging rate vs social context
 foraging$plotMigrants<- as.factor(foraging$plotMigrants)
 foraging$plotResidents<- as.factor(foraging$plotResidents)
-#For the migrants
 
-pdf("Fig1Socialcontexmigrants.pdf",width=14,height=8)
-stripchart(foraging$foragingRate~foraging$plotMigrants, method='jitter', jitter=0.3, cex.axis=1.3,vertical=TRUE, pch=19, cex=1.5, ylim=c(0,25), col=c("black","gray"),  ylab='Foraging rate (#captures / min)', xlab='Social context')
+#For the migrants, useDingbats=FALSE allow me to import this ch to illustrator without problems
+pdf("Fig1Socialcontexmigrants.pdf",width=14,height=8,useDingbats=FALSE)
+stripchart(foraging$foragingRate~foraging$plotMigrants, method='jitter', jitter=0.3, cex.axis=1.3,vertical=TRUE, pch=19, cex=1.5, ylim=c(0,25), col=c("black","gray"),  ylab='Foraging rate ( #captures / min)', xlab='Social context')
 points(c(1,2,3,4,5,6,7,8), tapply (foraging$foragingRate,foraging$plotMigrants,mean), pch="----", col=c("black","darkgray"),cex=2  )
 dev.off()
 
+
 # For the residents
-pdf("Fig1bSocialcontexResidents.pdf",width=14,height=8)
-stripchart(foraging$foragingRate~foraging$plotResidents, method='jitter', jitter=0.3, cex.axis=1.3,vertical=TRUE, pch=19, cex=1.5, ylim=c(0,30), col=c("black","gray"),  ylab='Foraging rate (#captures / min)', xlab='Social context')
+pdf("Fig1SocialcontexResidents.pdf",width=14,height=8, useDingbats=FALSE)
+stripchart(foraging$foragingRate~foraging$plotResidents, method='jitter', jitter=0.3, cex.axis=1.3,vertical=TRUE, pch=19, cex=1.5,cex.lab=1.3, ylim=c(0,15), col=c("black","gray"),  ylab='Foraging rate (#captures / min)', xlab='Social context')
 points(c(1,2,3,4,5,6), tapply (foraging$foragingRate,foraging$plotResidents,mean), pch="----", col=c("black","darkgray"),cex=2  )
 dev.off()
 
@@ -553,15 +556,15 @@ coefficients(glm1)
 foraging$plotMigrants<- as.factor(foraging$plotMigrants)
 foraging$plotResidents<- as.factor(foraging$plotResidents)
 #For the migrants
-
-pdf("Fig2SocialcontexmigrantsMVT.pdf",width=14,height=8)
+foraging
+pdf("Fig2SocialcontexmigrantsMVT.pdf",width=14,height=8,useDingbats=FALSE)
 stripchart(foraging$movementRate~foraging$plotMigrants, method='jitter', jitter=0.3, cex.axis=1.3,vertical=TRUE, pch=19, cex=1.5, ylim=c(0,55), col=c("black","gray"),  ylab='Foraging rate (#captures / min)', xlab='Social context')
 points(c(1,2,3,4,5,6,7,8), tapply (foraging$movementRate,foraging$plotMigrants,mean), pch="----", col=c("black","grey"),cex=2  )
 dev.off()
 
 
 # For the residents
-pdf("Fig2bSocialcontexResidentsMvt.pdf",width=14,height=8)
+pdf("Fig2bSocialcontexResidentsMvt.pdf",width=14,height=8,useDingbats=FALSE)
 stripchart(foraging$movementRate~foraging$plotResidents, method='jitter', jitter=0.3, cex.axis=1.3,vertical=TRUE, pch=19, cex=1.5, ylim=c(0,50), col=c("black","gray"),  ylab='Movement rate (#movements / min)', xlab='Social context')
 points(c(1,2,3,4,5,6), tapply (foraging$movementRate,foraging$plotResidents,mean), pch="----", col=c("black","darkgray"),cex=2)
 dev.off()
@@ -636,7 +639,7 @@ dev.off()
 #Sethophaga fusca
 #Basic glm plots
 quartz(title="flock size vs. foraging rate")                                         # creates a quartz window with title
-plot(jitter(capture,amount=0.9)~flocksizespecies,data=fusca2,xlab="",ylab="", xlim=c(0,40))    # plot 
+plot(jitter(capture,amount=0.9)~flocksizespecies,data=fusca,xlab="",ylab="", xlim=c(0,40))    # plot 
 symbols(fusca2$foragingRate~fusca2$flocksizespecies, circles=fusca2$dayofseason, inches=0.15,pch=11, col= "black", bg="black",fg="black")
 modelfusca<-glm(capture~flocksizespecies+I(flocksizespecies^2), data=fusca,family=poisson(link="log"), offset=log(minutes))
 #model<-glm(capture~flocksizespecies+I(flocksizespecies^2)+offset(log(minutes)), data=fusca2,family=poisson(link="log")
@@ -658,13 +661,11 @@ visreg(modelfusca,xvar="flocksizespecies",trans=exp)
 visreg(modelfusca,xvar="flocksizespecies")
 visreg(modelfusca,xvar="flocksizespecies",scale="response")
 
-modelfusca<-glm(capture~flocksizespecies+I(flocksizespecies^2), data=fusca,family=poisson(link="log"), offset=log(minutes))
-visreg(modelfusca,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,20), scale = "response", ylab="",  xlab=NA, rug=0) 
+pdf(file="Fig6afuscaflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+modelfusca<-glm(capture~flocksizespecies+I(flocksizespecies^2)+offset(log(minutes)), data=fusca,family=poisson(link="log"))
+visreg(modelfusca,"flocksizespecies",cond=list(minutes=1), xlim=c(0,35), ylim=c(0,20), scale = "response", ylab=NA,  xlab=NA, rug=0, main="Setophaga fusca",cex=1.5,cex.axis=1.5) 
 par(new = TRUE)
-plot(foragingRate~flocksizespecies, data=fusca, ylab="Foraging rate", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,20),pch=16)
-
-pdf(file="Fig6afuscaflocksize.pdf",width=14,height=10)
-barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=1),y=list(cex=1)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+plot(foragingRate~jitter(flocksizespecies,1.5), data=fusca, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,35), ylim=c(0,20),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
 dev.off()
 
 #####################################################
@@ -672,12 +673,10 @@ dev.off()
 #####################################################
 modelcanadensis<-glm(capture~flocksizespecies+I(flocksizespecies^2)+offset(log(minutes)), data=canadensis,family=poisson(link="log"))
 
-visreg(modelcanadensis,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,20), ylab="", scale ="response", xlab=NA, rug=0, trans=exp) 
+pdf(file="Fig6acanadensisflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelcanadensis,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,20), ylab="", scale ="response", xlab=NA,ylab=NA, rug=0, main="Cardellina canadensis",cex=1.5,cex.axis=1.5) 
 par(new = TRUE)
-plot(foragingRate~flocksizespecies, data=canadensis, ylab="Foraging rate", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,20),pch=16)
-
-pdf(file="Fig6afuscaflocksize.pdf",width=14,height=10)
-barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=1),y=list(cex=1)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+plot(foragingRate~jitter(flocksizespecies,1.5), data=canadensis, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,20),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
 dev.off()
 
 #####################################################
@@ -685,36 +684,32 @@ dev.off()
 #####################################################
 modelcerulea<-glm(capture~flocksizespecies+offset(log(minutes)), data=cerulea,family=poisson(link="log"))
 
-visreg(modelcerulea,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,20), scale = "response", ylab="",  xlab=NA, rug=0) 
+pdf(file="Fig6bceruleaflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelcerulea,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,20), scale = "response", ylab=NA,  xlab=NA, rug=0,main="Setophaga cerulea",cex=1.5,cex.axis=1.5) 
 par(new = TRUE)
-plot(foragingRate~flocksizespecies, data=cerulea, ylab="Foraging rate", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,20),pch=16)
-
-pdf(file="Fig6bceruleaflocksize.pdf",width=14,height=10)
-barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=1),y=list(cex=1)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+plot(foragingRate~jitter(flocksizespecies,1.5), data=cerulea, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,20),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
 dev.off()
 #####################################################
 #peregrina
 #####################################################
 
 modelperegrina<-glm(capture~flocksizespecies+I(flocksizespecies^2)+offset(log(minutes)), data=peregrina,family=poisson(link="log"))
-visreg(modelperegrina,"flocksizespecies",cond=list(minutes=1), xlim=c(0,35), ylim=c(0,40), scale = "response", ylab="",  xlab=NA, rug=0) 
+pdf(file="Fig6cperegrinaflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelperegrina,"flocksizespecies",cond=list(minutes=1), xlim=c(0,35), ylim=c(0,30), scale = "response", ylab=NA,  xlab=NA, rug=0, main="Oreothlypis peregrina",cex=1.5,cex.axis=1.5) 
 par(new = TRUE)
-plot(foragingRate~flocksizespecies, data=peregrina, ylab="Foraging rate", xlab="Flock size (Number of species)",xlim=c(0,35), ylim=c(0,40),pch=16)
-
-pdf(file="Fig6cperegrinaflocksize.pdf",width=14,height=10)
-barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=1),y=list(cex=1)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+plot(foragingRate~jitter(flocksizespecies,1.5), data=peregrina, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,35), ylim=c(0,30),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
 dev.off()
+
 #####################################################
 #pitiayumi
 #####################################################
 ###Note:Remove the influencial point to see it apply ylim=c(0,20)
 modelpitiayumi<-glm(capture~flocksizespecies+I(flocksizespecies^2)+offset(log(minutes)), data=pitiayumi,family=poisson(link="log"))
-visreg(modelpitiayumi,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,15), scale = "response", ylab="",  xlab=NA, rug=0) 
-par(new = TRUE)
-plot(foragingRate~flocksizespecies, data=pitiayumi, ylab="Foraging rate", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,15),pch=16)
 
-pdf(file="Fig6apitiayumiflocksize.pdf",width=14,height=10)
-barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=1),y=list(cex=1)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+pdf(file="Fig6apitiayumiflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelpitiayumi,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,15), scale = "response", ylab=NA,  xlab=NA, rug=0,main="Parula pitiayumi",cex=1.5,cex.axis=1.5) 
+par(new = TRUE)
+plot(foragingRate~jitter(flocksizespecies,1.5), data=pitiayumi, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,15),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
 dev.off()
 
 #####################################################
@@ -722,25 +717,22 @@ dev.off()
 #####################################################
 
 modelguira<-glm(capture~flocksizespecies+offset(log(minutes)), data=guira,family=poisson(link="log"))
-visreg(modelguira,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,15), scale = "response", rug=0) 
+pdf(file="Fig6eguiraflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelguira,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,15), scale = "response", rug=0,main="Hemithraupis guira",cex=1.5,cex.axis=1.5,ylab=NA,  xlab=NA) 
 par(new = TRUE)
-plot(foragingRate~flocksizespecies, data=guira, ylab="Foraging rate", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,15),pch=16)
-
-pdf(file="Fig6eguiraflocksize.pdf",width=14,height=10)
-barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=1),y=list(cex=1)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+plot(foragingRate~jitter(flocksizespecies,1.5), data=guira, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,15),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
 dev.off()
 #####################################################
 #chrysops
 #####################################################
-
 modelchrysops<-glm(capture~flocksizespecies+I(flocksizespecies^2)+offset(log(minutes)), data=chrysops,family=poisson(link="log"))
-visreg(modelchrysops,"flocksizespecies",cond=list(minutes=1),xlim=c(0,40), ylim=c(0,15), scale = "response")
+pdf(file="Fig6fchrysopsflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelchrysops,"flocksizespecies",cond=list(minutes=1),xlim=c(0,40), ylim=c(0,15), scale = "response",rug=0,main="Zimmerius chrysops ",cex=1.5,cex.axis=1.5)
 par(new = TRUE)
-plot(foragingRate~flocksizespecies, data=chrysops, ylab="Foraging rate", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,15),pch=16)
-
-pdf(file="Fig6fchrysopsflocksize.pdf",width=14,height=10)
-barchart(proportion~maneuver|species, groups=context, data=maneuvers, layout=c(3,2),scale=list(x=list(rot=0,cex=1),y=list(cex=1)),ylab="Relative proportions",xlab="Foraging maneuver",ylim=c(0,1),box.ratio=1.5, col=c("grey","white"))
+plot(foragingRate~jitter(flocksizespecies,1.5), data=chrysops, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,15),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
 dev.off()
+
+
 
 #USING GGPLOT
 ggplot(fusca2, aes(x = flocksizespecies, y = foragingRate)) + #shoudl it be capture?
@@ -776,9 +768,29 @@ stripchart(chrysops$foragingrate~chrysops$sociality, method='jitter', add=TRUE, 
 boxplot(pitiayumi$foragingrate~pitiayumi$sociality, main='Parula pitiayumi',ylab='Capture rate/min',col="white",ylim=c(0,20))
 stripchart(pitiayumi$foragingrate~pitiayumi$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
 
+#Effect size
+effect<-read.csv(file.choose("effect"), stringsAsFactors=FALSE, strip.white=TRUE, na.strings=c("NA",""))  
+
+str(effect)
+
+plot(Benefit ~ Ocurrence, data = effect )
+cor.test(effect$Benefit,effect$Ocurrence, method="kendall", alternative="greater")
+model<-lm(Benefit~Ocurrence, data=effect)
+
+plot(Benefit ~ Ocurrence, data = effect,xlab="Ocurrence in flocks", ylab="Increase in capture rate", xlim=c(0,10),ylim=c(0,15),pch=16, cex=1.5, cex.axis=1.3, cex.lab=1.3)
+abline(model)
+#Kendall's rank correlation tau
+
+#data:  effect$Benefit and effect$Ocurrence
+#T = 3, p-value = 0.8833
+#alternative hypothesis: true tau is greater than 0
+#sample estimates:
+# tau 
+#-0.4 
+
 
 #############################END OF SCRIPT ##########################################
-########################### END OF SCRIPY FOR MANUSCRIPT############################
+########################### END OF SCRIPt FOR MANUSCRIPT############################
 
 
 ## Using glm flocksize #species including flock an d solitary individuals includeit in the paper
