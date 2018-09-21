@@ -552,7 +552,7 @@ coefficients(glm1)
 #add the means##
 
 ##########################################################
-####2. Plot movent rate vs social context
+####2. Plot movement rate vs social context
 foraging$plotMigrants<- as.factor(foraging$plotMigrants)
 foraging$plotResidents<- as.factor(foraging$plotResidents)
 #For the migrants
@@ -663,9 +663,9 @@ visreg(modelfusca,xvar="flocksizespecies",scale="response")
 
 pdf(file="Fig6afuscaflocksize.pdf",width=14,height=10,useDingbats=FALSE)
 modelfusca<-glm(capture~flocksizespecies+I(flocksizespecies^2)+offset(log(minutes)), data=fusca,family=poisson(link="log"))
-visreg(modelfusca,"flocksizespecies",cond=list(minutes=1), xlim=c(0,35), ylim=c(0,20), scale = "response", ylab=NA,  xlab=NA, rug=0, main="Setophaga fusca",cex=1.5,cex.axis=1.5) 
+visreg(modelfusca,"flocksizespecies",cond=list(minutes=1), xlim=c(0,40), ylim=c(0,20), scale = "response", ylab=NA,  xlab=NA, rug=0, main="Setophaga fusca",cex=1.5,cex.axis=1.5) 
 par(new = TRUE)
-plot(foragingRate~jitter(flocksizespecies,1.5), data=fusca, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,35), ylim=c(0,20),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
+plot(foragingRate~jitter(flocksizespecies,1.5), data=fusca, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,40), ylim=c(0,20),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
 dev.off()
 
 #####################################################
@@ -777,7 +777,7 @@ plot(Benefit ~ Ocurrence, data = effect )
 cor.test(effect$Benefit,effect$Ocurrence, method="kendall", alternative="greater")
 model<-lm(Benefit~Ocurrence, data=effect)
 
-plot(Benefit ~ Ocurrence, data = effect,xlab="Ocurrence in flocks", ylab="Increase in capture rate", xlim=c(0,10),ylim=c(0,15),pch=16, cex=1.5, cex.axis=1.3, cex.lab=1.3)
+plot(Benefit ~ Ocurrence, data = effect,xlab="Ocurrence in flocks", ylab="Increase in capture rate", xlim=c(0,10),ylim=c(0,15),pch=16, cex=1.5, cex.axis=1.5, cex.lab=1.5)
 abline(model)
 #Kendall's rank correlation tau
 
@@ -787,6 +787,251 @@ abline(model)
 #sample estimates:
 # tau 
 #-0.4 
+
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+############Reviews from journal of Animal behavior###################
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+foraging<-read.csv(file.choose("foraging_all_species_offset"), stringsAsFactors=FALSE, strip.white=TRUE, na.strings=c("NA",""))  
+
+str(foraging)
+foraging$flocksizeind<- as.numeric(foraging$flocksizeind)
+
+library(dplyr)
+
+fusca<-filter(foraging, species=="Sethophaga fusca")
+canadensis<-filter(foraging, species=="Cardelina canadensis")
+cerulea<-filter(foraging,species=="Setophaga cerulea")
+peregrina<-filter(foraging,species=="Oreothlypis peregrina")
+guira<-filter(foraging,species=="Hemithraupis guira")
+chrysops<-filter(foraging,species=="Zimmerius chrysops")
+pitiayumi<-filter(foraging,species=="Parula pitiayumi")
+canadensis<-filter(foraging, species=="Cardelina canadensis")
+
+str(canadensis)
+
+#Model selection for flock size
+glm1fsi<-glm(capture~flocksizeind+I(flocksizeind^2), data=fusca,family=poisson(link="log"), offset=log(minutes))
+glm1fsi<-glm(capture~flocksizeind+I(flocksizeind^2), data=canadensis,family=poisson(link="log"), offset=log(minutes))
+glm1fsi<-glm(capture~flocksizeind+I(flocksizeind^2), data=cerulea,family=poisson(link="log"), offset=log(minutes)) #Overdisspersion to high model innacurat, small sample size
+glm1fsi<-glm(capture~flocksizeind+I(flocksizeind^2), data=peregrina,family=poisson(link="log"), offset=log(minutes))
+glm1fsi<-glm(capture~flocksizeind+I(flocksizeind^2), data=pitiayumi,family=poisson(link="log"), offset=log(minutes))
+glm1fsi<-glm(capture~flocksizeind+I(flocksizeind^2), data=guira,family=poisson(link="log"), offset=log(minutes))
+glm1fsi<-glm(capture~flocksizeind+I(flocksizeind^2), data=chrysops,family=poisson(link="log"), offset=log(minutes))
+
+glm2fsi<-glm(capture~flocksizeind, data=canadensis,family=poisson(link="log"), offset=log(minutes))
+glm3fsi<-update(glm2fs, . ~ . - flocksizeind)
+glm4fsi<-glm(capture~I(flocksizeind^2), data=canadensis,family=poisson(link="log"), offset=log(minutes))
+glmQ1fsi<-update(glm1fs, family=quasipoisson(link="log"))
+glmQ2fsi<-update(glm2fs, family=quasipoisson(link="log"))
+glmQ3fsi<-update(glm3fs, family=quasipoisson(link="log"))
+glmQ4fsi<-update(glm4fs, family=quasipoisson(link="log"))
+
+# Summary of the model allow me to interpret the estimates of the parameters (e.g effect sizes) in the model and the difference from cero and between them.
+# The summary give me the effect size. 
+summary(glm1fsi)
+summary(glmQ1fsi)
+
+
+#####overdisperssion parameters 
+dfun<-function(glmQ1fsi){with(glmQ1fsi,sum((weights * residuals^2)[weights > 0])/df.residual)}
+dfun(glmQ1fsi)
+
+
+#fusca=2.50
+#cerulea=4
+#peregrina=4
+#canadensis=1.76
+#pitiayumi=2.75
+#guira=3.17
+#chrysops=
+
+#### Model selection using  AICcmodavg
+library(AICcmodavg)
+
+###Model used  (glm1,glm2,glm3,glm4), for all the species which have overdispersed datta, remember to use the glm models instead of glmQ
+aictab(list(glm1fs,glm2fs,glm3fs,glm4fs),
+       modnames=c("FlockSizeSpecies+POLY",
+                  "FlockSizeSpecies",
+                  "Intercept",
+                  "poly"),
+       c.hat=2.50)
+
+aictab(list(glm1fs,glm2fs,glm3fs),
+       modnames=c("FlockSizeSpecies+POLY",
+                  "FlockSizeSpecies",
+                  "Intercept"),
+       c.hat=1.05)
+
+
+#### To make the table for AIC cfor species that are not overdisperssed
+
+aictab (list(glm1,glm2fs,glm3fs,glm4fs,glm5fs),
+        modnames=c("FlockSizeSpecies+Dayofseason",
+                   "FlockSizeSpecies",
+                   "Dayofseason",
+                   "Intercept",
+                   "poly"))
+
+######SUMMARY TABLE
+#A beautiful table in html for the parameters of glm models
+#For the parameter stimates we need to consider the models with the Quasipoisson distribution, the points estimates are identical
+# to the model with poisson distribution but the standard error and confidence intervals are wider!
+sjt.glm(glmQ1fs,glmQ2fs,glmQ4fs,
+        depvar.labels = c("Model1: Socialcontext+Dayofseason","Model2:Socialcontext","Model3:Day of season"),
+        pred.labels = NULL,
+        show.aicc=TRUE, 
+        show.family=TRUE, 
+        group.pred = FALSE,
+        exp.coef = FALSE,  # if true Regression and cof.intervals are exponentiaded st.error are not in the unstransformed scale
+        p.numeric=TRUE,
+        robust = TRUE,
+        show.se = TRUE,
+        show.r2=TRUE,
+        show.dev=TRUE,
+        show.chi2=TRUE,
+        cell.spacing = 0.001,
+        sep.column = FALSE)
+
+
+
+
+
+
+#Group size effect using 
+########################################
+#### Visualizing model fits
+##############################################################################################
+#Sethophaga fusca
+#Basic glm plots
+quartz(title="flock size vs. foraging rate")                                         # creates a quartz window with title
+plot(jitter(capture,amount=0.9)~flocksizeind,data=fusca,xlab="",ylab="", xlim=c(0,40))    # plot 
+symbols(fusca$foragingRate~fusca$flocksizeind, circles=fusca$dayofseason, inches=0.15,pch=11, col= "black", bg="black",fg="black")
+modelfusca<-glm(capture~flocksizeind+I(flocksizeind^2), data=fusca,family=poisson(link="log"), offset=log(minutes))
+model<-glm(capture~flocksizeind+I(flocksizeind^2)+offset(log(minutes)), data=fusca2,family=poisson(link="log"),curve(predict(modelfusca,data.frame(flocksizeind=x,minutes=1),type="resp"), add=TRUE)) # draws a curve based on prediction from regression model
+
+### Using visreg
+
+#You can use visreg to visualize the model fit on the transformed scale (the function uses predict(z) to generate the result). 
+# The glm method fits a linear model on the transformed scale, and this is what you will visualize. The dots are not the transformed data, however. 
+# They are "working values" obtained by transforming the residuals of the fitted model on the original scale. glm repeatedly recalculates the working values and 
+#the fitted model as it converges on the maximum likelihood estimate. visreg shows you the results from the final iteration.
+
+# If want to change the size of the points
+#visreg(model,"flocksizeind", type = "conditional", xlim=c(0,40), ylim=c(0,20), scale = "response", ylab="",  xlab=NA, rug=0) 
+#par(new = TRUE)
+#symbols(fusca$foragingRate~fusca$flocksizeind, circles=fusca$dayofseason, inches=0.15,pch=11, col= "black", bg="black",fg="black",xlim=c(0,40), ylim=c(0,20))
+
+visreg(modelfusca,xvar="flocksizeind",trans=exp)
+visreg(modelfusca,xvar="flocksizeind")
+visreg(modelfusca,xvar="flocksizeind",scale="response")
+
+pdf(file="Fig11.fuscaflocksizeind.pdf",width=14,height=10,useDingbats=FALSE)
+modelfusca<-glm(capture~flocksizeind+I(flocksizeind^2)+offset(log(minutes)), data=fusca,family=poisson(link="log"))
+visreg(modelfusca,"flocksizeind",cond=list(minutes=1), xlim=c(0,60), ylim=c(0,20), scale = "response", ylab=NA,  xlab=NA, rug=0, main="Setophaga fusca",cex=1.5,cex.axis=1.5) 
+par(new = TRUE)
+plot(foragingRate~jitter(flocksizeind,1.5), data=fusca, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,60), ylim=c(0,20),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
+dev.off()
+
+#####################################################
+#Cardellina canadensis
+#####################################################
+modelcanadensis<-glm(capture~flocksizeind+I(flocksizeind^2)+offset(log(minutes)), data=canadensis,family=poisson(link="log"))
+
+pdf(file="Fig11.canadensisflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelcanadensis,"flocksizeind",cond=list(minutes=1), xlim=c(0,60), ylim=c(0,20), ylab="", scale ="response", xlab=NA,ylab=NA, rug=0, main="Cardellina canadensis",cex=1.5,cex.axis=1.5) 
+par(new = TRUE)
+plot(foragingRate~jitter(flocksizeind,1.5), data=canadensis, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,60), ylim=c(0,20),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
+dev.off()
+
+#####################################################
+#Cerulea
+#####################################################
+modelcerulea<-glm(capture~flocksizeind+offset(log(minutes)), data=cerulea,family=poisson(link="log"))
+
+pdf(file="Fig11.ceruleaflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelcerulea,"flocksizeind",cond=list(minutes=1), xlim=c(0,70), ylim=c(0,20), scale = "response", ylab=NA,  xlab=NA, rug=0,main="Setophaga cerulea",cex=1.5,cex.axis=1.5) 
+par(new = TRUE)
+plot(foragingRate~jitter(flocksizeind,1.5), data=cerulea, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,70), ylim=c(0,20),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
+dev.off()
+#####################################################
+#peregrina
+#####################################################
+
+modelperegrina<-glm(capture~flocksizeind+I(flocksizeind^2)+offset(log(minutes)), data=peregrina,family=poisson(link="log"))
+pdf(file="Fig11peregrinaflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelperegrina,"flocksizeind",cond=list(minutes=1), xlim=c(0,60), ylim=c(0,30), scale = "response", ylab=NA,  xlab=NA, rug=0, main="Oreothlypis peregrina",cex=1.5,cex.axis=1.5) 
+par(new = TRUE)
+plot(foragingRate~jitter(flocksizeind,1.5), data=peregrina, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,60), ylim=c(0,30),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
+dev.off()
+
+#####################################################
+#pitiayumi
+#####################################################
+###Note:Remove the influencial point to see it apply ylim=c(0,20)
+modelpitiayumi<-glm(capture~flocksizeind+I(flocksizeind^2)+offset(log(minutes)), data=pitiayumi,family=poisson(link="log"))
+
+pdf(file="Fig11pitiayumiflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelpitiayumi,"flocksizeind",cond=list(minutes=1), xlim=c(0,60), ylim=c(0,15), scale = "response", ylab=NA,  xlab=NA, rug=0,main="Parula pitiayumi",cex=1.5,cex.axis=1.5) 
+par(new = TRUE)
+plot(foragingRate~jitter(flocksizeind,1.5), data=pitiayumi, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,60), ylim=c(0,15),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
+dev.off()
+
+#####################################################
+#guira
+#####################################################
+
+modelguira<-glm(capture~flocksizeind+offset(log(minutes)), data=guira,family=poisson(link="log"))
+pdf(file="Fig11guiraflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelguira,"flocksizeind",cond=list(minutes=1), xlim=c(0,60), ylim=c(0,15), scale = "response", rug=0,main="Hemithraupis guira",cex=1.5,cex.axis=1.5,ylab=NA,  xlab=NA) 
+par(new = TRUE)
+plot(foragingRate~jitter(flocksizeind,1.5), data=guira, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,60), ylim=c(0,15),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
+dev.off()
+#####################################################
+#chrysops
+#####################################################
+modelchrysops<-glm(capture~flocksizeind+I(flocksizeind^2)+offset(log(minutes)), data=chrysops,family=poisson(link="log"))
+pdf(file="Fig11.chrysopsflocksize.pdf",width=14,height=10,useDingbats=FALSE)
+visreg(modelchrysops,"flocksizeind",cond=list(minutes=1),xlim=c(0,50), ylim=c(0,15), scale = "response",rug=0,main="Zimmerius chrysops ",cex=1.5,cex.axis=1.5)
+par(new = TRUE)
+plot(foragingRate~jitter(flocksizeind,1.5), data=chrysops, ylab="Foraging rate (#captures / min)", xlab="Flock size (Number of species)",xlim=c(0,50), ylim=c(0,15),pch=16,cex=1.5, cex.axis=1.5,cex.lab=1.5)
+dev.off()
+
+
+
+#USING GGPLOT
+ggplot(fusca2, aes(x = flocksizeind, y = foragingRate)) + #shoudl it be capture?
+  geom_point(aes(size = dayofseason)) 
+stat_smooth(method = "glm", family=quasipoisson, formula=y~x+I(x^2))  + 
+  theme_bw() 
+
+# other summary graphs no used in the manuscript ----------------------------------
+
+# visualizing the data for each species
+## boxplot with stripchart on the back for foraging data
+#Migrants
+#Setophaga fusca
+boxplot(fusca$foragingrate~fusca$sociality, main='Setophaga fusca',ylab='Capture rate/min',col="white",ylim=c(0,20))
+stripchart(fusca$foragingrate~fusca$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
+#Setophaga cerulea
+boxplot(cerulea$foragingrate~cerulea$sociality, main='Setophaga cerulea',ylab='Capture rate/min',col="white",ylim=c(0,20), width=c(1.0, 1.0))
+stripchart(cerulea$foragingrate~cerulea$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
+#Cardelina canadensis
+boxplot(canadensis$foragingrate~canadensis$sociality, main='Cardelina canadensis',ylab='Capture rate/min',col="white",ylim=c(0,15))
+stripchart(canadensis$foragingrate~canadensis$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,15))
+#Oreothlypis peregrina
+boxplot(peregrina$foragingrate~peregrina$sociality, main='Oreothlypis peregrina',ylab='Capture rate/min',col="white",ylim=c(0,25))
+stripchart(peregrina$foragingrate~peregrina$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,25))
+#Residents
+#Hemithraupis guira
+boxplot(guira$foragingrate~guira$sociality, main='Hemithraupis guira',ylab='Capture rate/min',col="white",ylim=c(0,15))
+stripchart(guira$foragingrate~guira$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,15))
+#Zimmerius chrysops
+boxplot(chrysops$foragingrate~chrysops$sociality, main='Zimmerius chrysops',ylab='Capture rate/min',col="white",ylim=c(0,10))
+stripchart(chrysops$foragingrate~chrysops$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,10))
+#Parula pitiayumi
+boxplot(pitiayumi$foragingrate~pitiayumi$sociality, main='Parula pitiayumi',ylab='Capture rate/min',col="white",ylim=c(0,20))
+stripchart(pitiayumi$foragingrate~pitiayumi$sociality, method='jitter', add=TRUE, vertical=TRUE, pch=19, cex=0.8, ylim=c(0,20))
 
 
 #############################END OF SCRIPT ##########################################
